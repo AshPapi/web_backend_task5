@@ -7,13 +7,13 @@ if (!isset($values) || !is_array($values)) {
 // Загружаем сохранённые данные из куки
 $fields = ['full_name', 'phone', 'email', 'birth_date', 'gender', 'languages', 'biography', 'contract_accepted'];
 foreach ($fields as $field) {
-    $values[$field] = $_COOKIE[$field . '_value'] ?? '';
+    $values[$field] = $_COOKIE[$field . '_value'] ?? ($values[$field] ?? '');
 }
 
 // Если данные языков программирования сохранены, преобразуем их в массив
-if (!empty($values['languages'])) {
+if (!empty($values['languages']) && is_string($values['languages'])) {
     $values['languages'] = explode(',', $values['languages']);
-} else {
+} elseif (!is_array($values['languages'])) {
     $values['languages'] = [];
 }
 
@@ -31,6 +31,15 @@ $success_message = '';
 if (isset($_COOKIE['save'])) {
     $success_message = 'Данные успешно сохранены!';
     setcookie('save', '', time() - 3600, "/");
+}
+
+// Проверяем наличие логина и пароля для отображения
+$new_login = $_COOKIE['new_login'] ?? '';
+$new_password = $_COOKIE['new_password'] ?? '';
+if ($new_login && $new_password) {
+    $success_message .= "<br>Ваш логин: $new_login<br>Ваш пароль: $new_password<br>Сохраните эти данные, они больше не будут отображаться!";
+    setcookie('new_login', '', time() - 3600, "/");
+    setcookie('new_password', '', time() - 3600, "/");
 }
 ?>
 
@@ -117,6 +126,20 @@ if (isset($_COOKIE['save'])) {
             font-size: 14px;
             margin-top: 5px;
             text-align: center;
+        }
+
+        .auth-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .auth-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .auth-link a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -210,7 +233,17 @@ if (isset($_COOKIE['save'])) {
             <?php endif; ?>
         </div>
 
-        <button type="submit">Сохранить</button>
+        <button type="submit"><?php echo $isAuthorized ? 'Сохранить изменения' : 'Сохранить'; ?></button>
     </form>
+
+    <?php if (!$isAuthorized): ?>
+        <div class="auth-link">
+            <a href="login.php">Войти для редактирования данных</a>
+        </div>
+    <?php else: ?>
+        <div class="auth-link">
+            <a href="logout.php">Выйти</a>
+        </div>
+    <?php endif; ?>
 </body>
 </html>
